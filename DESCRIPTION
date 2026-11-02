@@ -15,3 +15,5 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Imports:
     stats
+URL: https://github.com/AliVali99/pcaboot
+BugReports: https://github.com/AliVali99/pcaboot/issues
