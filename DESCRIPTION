@@ -1,0 +1,17 @@
+Package: pcaboot
+Title: Bootstrap Confidence Intervals and Stability Analysis for PCA Loadings 
+Version: 0.0.0.9000
+Authors@R: 
+    person("Ali", "Vali", , "alivali111@yandex.ru", role = c("aut", "cre"))
+Description: Principal component analysis (PCA) loadings are typically
+    interpreted from a single run, with no measure of uncertainty or
+    stability. This package provides bootstrap-based confidence intervals
+    for loadings, sign-alignment to resolve the inherent sign ambiguity
+    of principal components, and metrics for identifying which variables
+    and components are stable across resamples.
+License: MIT + file LICENSE
+Config/roxygen2/version: 8.1.0
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Imports:
+    stats
