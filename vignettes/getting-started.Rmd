@@ -1,0 +1,77 @@
+---
+title: "Getting Started with pcaboot"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with pcaboot}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 6,
+  fig.height = 4
+)
+```
+
+```{r setup}
+library(pcaboot)
+```
+
+# Introduction
+
+Principal component analysis (PCA) loadings are typically interpreted
+from a single run, with no measure of how stable they are across
+samples. `pcaboot` solves this by running PCA on many bootstrap
+resamples and reporting confidence intervals, sign consistency, and
+stability metrics for every loading.
+
+This vignette walks through a complete workflow:
+
+1. Run bootstrap PCA loadings
+2. Visualize loadings with confidence intervals
+3. Identify stable variables
+4. Group redundant variables into families
+
+# The Data
+
+We use the built-in `iris` dataset. It has 150 observations and
+4 numeric variables:
+
+```{r}
+data(iris)
+head(iris[, 1:4])
+```
+
+The fifth column (`Species`) is a factor, so we drop it before PCA:
+
+```{r}
+X <- iris[, 1:4]
+```
+
+# Step 1: Bootstrap PCA Loadings
+
+Run PCA on 200 bootstrap resamples:
+
+```{r}
+set.seed(42)
+boot <- boot_loadings(X, n_boot = 200)
+boot
+```
+
+So 4 variables can be reduced to 2 representatives with minimal
+information loss.
+
+# Next Steps
+
+- See `?boot_loadings` for all parameters
+- Use `n_components = 2` to keep only the first two components
+- Use `rotate = "varimax"` for interpretable rotations
+
+# Session Info
+
+```{r}
+sessionInfo()
+```

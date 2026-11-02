@@ -3,6 +3,7 @@
 #' Runs PCA on \code{n_boot} bootstrap resamples and returns per-variable
 #' loading distributions. Component signs are aligned to a reference PCA
 #' run to resolve the inherent sign ambiguity of principal components.
+# Neden Gozukmedi?
 #'
 #' @param data A numeric matrix or data.frame with observations in rows.
 #' @param n_boot Number of bootstrap samples. Default 100.
