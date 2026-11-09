@@ -26,12 +26,30 @@
 #'
 #' @export
 boot_loadings <- function(data, n_boot = 100, n_components = NULL,
-                          rotate = NULL, na_action = "error") {
+                          rotate = NULL, na_action = "error",numeric_only = TRUE) {
 
   # --- 1. Input validation ---
-  if (!is.matrix(data) && !is.data.frame(data)) {
+  if (!is.matrix(data) && !is.data.frame(data)) {S
     stop("`data` must be a matrix or data.frame.")
   }
+
+
+  if (numeric_only && is.data.frame(data)) {
+    num_cols <- sapply(data, is.numeric)
+    if (!any(num_cols)) {
+      stop("`data` has no numeric columns. PCA requires numeric input.")
+    }
+    if (!all(num_cols)) {
+      dropped <- names(data)[!num_cols]
+      warning(sprintf(
+        "Dropping %d non-numeric column(s): %s",
+        length(dropped),
+        paste(dropped, collapse = ", ")
+      ), call. = FALSE)
+      data <- data[, num_cols, drop = FALSE]
+    }
+  }
+
 
   data <- as.matrix(data)
 

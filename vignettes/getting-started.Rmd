@@ -28,47 +28,191 @@ samples. `pcaboot` solves this by running PCA on many bootstrap
 resamples and reporting confidence intervals, sign consistency, and
 stability metrics for every loading.
 
-This vignette walks through a complete workflow:
+This vignette focuses on the core function, `boot_loadings()`, and
+walks through:
 
-1. Run bootstrap PCA loadings
-2. Visualize loadings with confidence intervals
-3. Identify stable variables
-4. Group redundant variables into families
+1. How to call it on a realistic dataset
+2. How to read its output
+3. What each parameter does
+4. How to extract results
 
 # The Data
 
-We use the built-in `iris` dataset. It has 150 observations and
-4 numeric variables:
+We use the `Cars93` dataset from the `MASS` package (which ships with
+R). It contains 93 cars from the 1993 model year, with 27 variables
+describing price, performance, size, and fuel economy:
 
 ```{r}
-data(iris)
-head(iris[, 1:4])
+data(Cars93, package = "MASS")
+dim(Cars93)
 ```
 
-The fifth column (`Species`) is a factor, so we drop it before PCA:
-
-```{r}
-X <- iris[, 1:4]
-```
+The dataset has both numeric and categorical columns. `boot_loadings()`
+automatically keeps the numeric ones and warns you about the rest.
 
 # Step 1: Bootstrap PCA Loadings
 
-Run PCA on 200 bootstrap resamples:
+Call `boot_loadings()` on `Cars93`. Because the dataset contains a few
+NA values, we use `na_action = "omit"`:
 
 ```{r}
 set.seed(42)
-boot <- boot_loadings(X, n_boot = 200)
+boot <- boot_loadings(Cars93, n_boot = 200, na_action = "omit")
 boot
 ```
 
-So 4 variables can be reduced to 2 representatives with minimal
-information loss.
+The output has two warnings (non-numeric columns dropped, NAs removed),
+followed by a summary of the bootstrap results. With 18 numeric
+variables, up to 18 components are computed. The `print` method shows
+only the first 3 for readability.
+
+# Step 2: Read the Output
+
+## PC1: Car size
+
+```{r}
+boot$mean_loadings[, "PC1"]
+```
+
+PC1 has large positive loadings on `Length`, `Width`, `Wheelbase`,
+`Weight`, `Fuel.tank.capacity`, and `Passengers`. These are all
+measures of **how big the car is**, so PC1 can be interpreted as a
+**size axis**.
+
+## PC2: Price vs. economy
+
+```{r}
+boot$mean_loadings[, "PC2"]
+```
+
+PC2 loads positively on `Price` and its companions (`Min.Price`,
+`Max.Price`) and negatively on `MPG.city` and `MPG.highway`. This
+separates **expensive, thirsty cars** from **cheap, efficient cars**,
+so PC2 is a **price–economy axis**.
+
+## PC3: Performance
+
+```{r}
+boot$mean_loadings[, "PC3"]
+```
+
+PC3 has strong loadings on `Horsepower` and `RPM`, with a negative
+loading on `MPG.highway`. This is a **performance axis**.
+
+## Which loadings are reliable?
+
+```{r}
+boot$ci_lower[, "PC1"]
+boot$ci_upper[, "PC1"]
+boot$sign_consistency[, "PC1"]
+```
+
+Loadings with a 95% CI that does not cross zero are stable. With
+`Cars93`, most loadings on PC1–PC3 have `sign_consistency ≈ 1.0`,
+meaning the directions are reliable across bootstrap runs.
+
+# Step 3: Parameters
+
+## `n_boot`
+
+Larger `n_boot` gives narrower confidence intervals:
+
+```{r}
+set.seed(1)
+boot_50  <- boot_loadings(Cars93, n_boot = 50,  na_action = "omit")
+boot_500 <- boot_loadings(Cars93, n_boot = 500, na_action = "omit")
+
+data.frame(
+  variable = c("Length", "Price"),
+  sd_n50   = c(boot_50$sd_loadings["Length", "PC1"],
+               boot_50$sd_loadings["Price",  "PC2"]),
+  sd_n500  = c(boot_500$sd_loadings["Length", "PC1"],
+               boot_500$sd_loadings["Price",  "PC2"])
+)
+```
+
+## `n_components`
+
+With 18 variables, 18 components. Usually you only need the first 3:
+
+```{r}
+boot_3 <- boot_loadings(Cars93, n_boot = 100, n_components = 3,
+                         na_action = "omit")
+dim(boot_3$mean_loadings)
+# [1] 18  3
+```
+
+## `rotate`
+
+Varimax rotation often produces a cleaner "simple structure":
+
+```{r}
+boot_rot <- boot_loadings(Cars93, n_boot = 100, n_components = 3,
+                           rotate = "varimax", na_action = "omit")
+boot_rot$mean_loadings
+```
+
+After rotation, each variable usually loads on one component and is
+near zero on the others. This makes the output easier to interpret
+with 18 variables.
+
+## `na_action`
+
+`Cars93` has a few NA values. If you forget `na_action`, you get an
+error:
+
+```r
+boot_loadings(Cars93, n_boot = 50)
+# Error: `data` contains NA. Use na_action = 'omit'.
+```
+
+With `"omit"`, the function drops incomplete rows and continues:
+
+```{r}
+boot <- boot_loadings(Cars93, n_boot = 100, na_action = "omit")
+# Warning: Removed 4 rows containing NA.
+```
+
+## `numeric_only`
+
+By default, `numeric_only = TRUE`, so non-numeric columns are dropped
+with a warning. If you want the function to stop on non-numeric input
+instead, set `numeric_only = FALSE`:
+
+```r
+boot_loadings(Cars93, n_boot = 50, numeric_only = FALSE)
+# Error: `data` must be numeric. Convert factor or character columns first.
+```
+
+# Step 4: A Complete Example
+
+Find the 5 variables that most strongly define PC1 (size), with
+confidence intervals:
+
+```{r}
+set.seed(123)
+res <- boot_loadings(Cars93, n_boot = 200, n_components = 3,
+                     rotate = "varimax", na_action = "omit")
+
+pc1 <- data.frame(
+  variable = rownames(res$mean_loadings),
+  loading  = res$mean_loadings[, "PC1"],
+  ci_low   = res$ci_lower[, "PC1"],
+  ci_high  = res$ci_upper[, "PC1"],
+  sign     = res$sign_consistency[, "PC1"]
+)
+
+pc1[order(-abs(pc1$loading)), ][1:5, ]
+```
+
+You now have an honest, bootstrap-validated list of the variables that
+define PC1, with confidence intervals. This is something a single
+`prcomp()` call cannot provide.
 
 # Next Steps
 
-- See `?boot_loadings` for all parameters
-- Use `n_components = 2` to keep only the first two components
-- Use `rotate = "varimax"` for interpretable rotations
+- See `?boot_loadings` for full parameter documentation
+- See `?boot_loadings` examples for more use cases
 
 # Session Info
 

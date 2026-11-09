@@ -15,54 +15,49 @@ knitr::opts_chunk$set(
 
 # pcaboot
 
-<!-- badges: start -->
-<!-- badges: end -->
+Bootstrap confidence intervals and stability metrics for Principal
+Component Analysis (PCA) loadings.
 
-The goal of **pcaboot** is to provide **bootstrap confidence intervals
-and stability metrics for Principal Component Analysis (PCA) loadings**.
+## What it does
 
-Standard PCA reports loadings from a single run. There is no measure of
-how much those loadings would change if the data were slightly different.
-`pcaboot` fills this gap by running PCA on many bootstrap resamples,
-aligning component signs, and reporting for each loading:
+Standard PCA reports loadings from a single run. There is no measure
+of how much those loadings would change if the data were slightly
+different. `pcaboot` fills this gap by running PCA on many bootstrap
+resamples, aligning component signs, and reporting for each loading:
 
 - **Mean loading** across bootstrap runs
 - **Standard deviation** (how much it varies)
 - **95% confidence interval** (a plausible range)
 - **Sign consistency** (fraction of runs with the same sign)
 
-This lets you answer the question: *"Is this loading reliable, or is it
-noise?"*
+This lets you answer: *"Is this loading reliable, or is it noise?"*
 
 ## Installation
 
-You can install the development version of pcaboot from
-[GitHub](https://github.com/) with:
+Install the development version from GitHub:
 
 ```r
 # install.packages("devtools")
-devtools::install_github("kullaniciAdin/pcaboot")
+devtools::install_github("AliVali99/pcaboot")
 ```
 
-## Example
+## Quick example
 
-A minimal example using the built-in `iris` dataset:
+`boot_loadings()` accepts numeric matrices and data.frames. When a
+data.frame has mixed column types, non-numeric columns are dropped
+automatically:
 
 ```{r example}
 library(pcaboot)
 
-# Run bootstrap PCA on the first four columns of iris
-boot <- boot_loadings(iris[, 1:4], n_boot = 100)
+# Cars93 has 27 columns: 17 numeric, 10 categorical
+data(Cars93, package = "MASS")
 
-# Mean loadings
-boot$mean_loadings
+# boot_loadings() keeps the numeric columns and warns about the rest
+boot <- boot_loadings(Cars93, n_boot = 100, na_action = "omit")
 
-# 95% confidence intervals
-boot$ci_lower
-boot$ci_upper
-
-# Sign consistency (1.0 = very stable)
-boot$sign_consistency
+# Mean loadings for the first 3 components
+round(boot$mean_loadings[, 1:3], 3)
 ```
 
 The output tells you, for each variable and each component, how stable
@@ -80,7 +75,7 @@ its loading is across resamples.
 | `ci_upper` | Upper 97.5% bound of the 95% CI |
 | `sign_consistency` | Fraction of runs with the same sign |
 | `n_boot` | Number of successful bootstrap runs |
-| `pca_reference` | Reference PCA from the full data |
+| `pca_reference` | Reference PCA computed on the full data |
 
 ## Parameters
 
@@ -88,16 +83,37 @@ its loading is across resamples.
 |-----------|---------|-------------|
 | `data` | — | Numeric matrix or data.frame |
 | `n_boot` | `100` | Number of bootstrap resamples |
-| `n_components` | `NULL` | Components to keep (NULL = all) |
+| `n_components` | `NULL` | Components to keep (`NULL` = all) |
 | `rotate` | `NULL` | Optional rotation (`"varimax"` or `NULL`) |
 | `na_action` | `"error"` | `"error"` to stop, `"omit"` to drop rows |
+| `numeric_only` | `TRUE` | Drop non-numeric columns from data.frames |
 
-## Getting help
+## Example with rotation
 
-- See `?boot_loadings` for full documentation
-- See `vignette("getting-started")` for a longer tutorial
-- Report issues at [GitHub Issues](https://github.com/kullaniciAdin/pcaboot/issues)
+Varimax rotation produces a cleaner "simple structure", which is easier
+to interpret with many variables:
+
+```{r rotation}
+boot_rot <- boot_loadings(
+  Cars93,
+  n_boot = 100,
+  n_components = 3,
+  rotate = "varimax",
+  na_action = "omit"
+)
+
+round(boot_rot$mean_loadings, 3)
+```
+
+After rotation, each variable typically loads strongly on one component
+and weakly on the others.
+
+## Documentation
+
+- `?boot_loadings` — full parameter documentation
+- `vignette("getting-started")` — a longer tutorial using `Cars93`
+- [Report issues](https://github.com/AliVali99/pcaboot/issues)
 
 ## License
 
-MIT © Senin Adin
+MIT © Ali

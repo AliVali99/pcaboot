@@ -10,7 +10,8 @@ boot_loadings(
   n_boot = 100,
   n_components = NULL,
   rotate = NULL,
-  na_action = "error"
+  na_action = "error",
+  numeric_only = TRUE
 )
 
 \method{print}{boot_loadings}(x, ...)
