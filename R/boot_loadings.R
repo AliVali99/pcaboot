@@ -54,7 +54,7 @@ boot_loadings <- function(data, n_boot = 100, n_components = NULL,
   data <- as.matrix(data)
 
   if (!is.numeric(data)) {
-    stop("`data` must be numeric. Convert factor or character columns first.")
+    stop("`data` must bee numeric. Convert factor or character columns first.")
   }
 
   # --- 2. NA handling ---
