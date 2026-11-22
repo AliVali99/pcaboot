@@ -50,7 +50,7 @@ automatically:
 ```{r example}
 library(pcaboot)
 
-# Cars93 has 27 columns: 17 numeric, 10 categorical
+# Cars93 has 27 columns: 18 numeric, 10 categorical
 data(Cars93, package = "MASS")
 
 # boot_loadings() keeps the numeric columns and warns about the rest
