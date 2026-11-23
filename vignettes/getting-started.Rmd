@@ -11,8 +11,8 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  fig.width = 6,
-  fig.height = 4
+  fig.width = 7,
+  fig.height = 4.5
 )
 ```
 
@@ -113,10 +113,75 @@ meaning the directions are reliable across bootstrap runs.
 
 # Step 3: Parameters
 
-## `n_boot`
+The plot() method for "boot_loadings" objects offers six views,
+selected with the type argument. All plots are ggplot2 objects,
+so you can store them and modify them further.
+Everything at once: type = "all"
 
-Larger `n_boot` gives narrower confidence intervals:
+```{r}
+plot(boot, type = "all")
+```
 
+f the patchwork package is installed, the four diagnostic panels
+(scree, loadings, confidence intervals, sign consistency) are combined
+into a single figure. Otherwise they are printed one by one.
+
+```{r}
+plot(boot, type = "scree")
+```
+
+The scree plot shows the variance explained by each component. The
+"elbow" after PC2-PC3 suggests that three components capture most of
+the structure in the data.
+
+```{r}
+plot(boot, type = "loadings", components = 1:3)
+```
+
+Red tiles are positive loadings, blue tiles negative ones. Each cell
+is labelled with the mean loading across bootstrap runs. Passing
+components = 1:3 restricts the view to the components we care
+about.
+
+Confidence intervals: which loadings are stable?
+
+```{r}
+plot(boot, type = "ci", components = 1:3)
+```
+
+Each point is a mean loading, and the horizontal bar is its 95%
+bootstrap confidence interval. Intervals that cross the dashed zero
+line mark loadings whose sign or magnitude cannot be trusted. This is
+the single most useful diagnostic plot in the package.
+
+Sign consistency
+```{r}
+plot(boot, type = "sign", components = 1:3)
+```
+Sign consistency is the proportion of bootstrap runs in which the
+loading had the same sign as the mean loading, ranging from 0.5
+(unstable, sign flips randomly) to 1.0 (always the same direction).
+Dark tiles here confirm that the main loadings are stable.
+
+Biplot
+```{r}
+plot(boot, type = "biplot")
+```
+
+The biplot overlays the observations (blue points) on the PC1-PC2
+plane with arrows showing the direction of each variable (red). Cars
+in the lower right are large and expensive; cars in the upper left
+are small and fuel-efficient.
+Because plot() invisibly returns the ggplot object, you can save
+and restyle any figure:
+```{r}
+g <- plot(boot, type = "ci", components = 1:3)
+g + ggplot2::theme_minimal(base_size = 14)
+```
+
+Step 4: Parameters
+n_boot
+Larger n_boot gives more precise interval estimates:
 ```{r}
 set.seed(1)
 boot_50  <- boot_loadings(Cars93, n_boot = 50,  na_action = "omit")
@@ -130,6 +195,7 @@ data.frame(
                boot_500$sd_loadings["Price",  "PC2"])
 )
 ```
+
 
 ## `n_components`
 
@@ -184,7 +250,7 @@ boot_loadings(Cars93, n_boot = 50, numeric_only = FALSE)
 # Error: `data` must be numeric. Convert factor or character columns first.
 ```
 
-# Step 4: A Complete Example
+# Step 5: A Complete Example
 
 Find the 5 variables that most strongly define PC1 (size), with
 confidence intervals:
@@ -202,7 +268,11 @@ pc1 <- data.frame(
   sign     = res$sign_consistency[, "PC1"]
 )
 
-pc1[order(-abs(pc1$loading)), ][1:5, ]
+top5 <- pc1[order(-abs(pc1$loading)), ][1:5, ]
+top5
+```
+```{r}
+plot(res, type = "ci", components = "PC1")
 ```
 
 You now have an honest, bootstrap-validated list of the variables that

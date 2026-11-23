@@ -2,7 +2,6 @@
 % Please edit documentation in R/boot_loadings.R
 \name{boot_loadings}
 \alias{boot_loadings}
-\alias{print.boot_loadings}
 \title{Bootstrap PCA Loadings}
 \usage{
 boot_loadings(
@@ -11,37 +10,29 @@ boot_loadings(
   n_components = NULL,
   rotate = NULL,
   na_action = "error",
-  numeric_only = TRUE
+  k_nn = 5,
+  seed = NULL
 )
-
-\method{print}{boot_loadings}(x, ...)
 }
 \arguments{
-\item{data}{A numeric matrix or data.frame with observations in rows.}
+\item{data}{Numeric matrix or data.frame.}
 
-\item{n_boot}{Number of bootstrap samples. Default 100.}
+\item{n_boot}{Bootstrap samples. Default 100.}
 
-\item{n_components}{Number of components to keep. Default all.}
+\item{n_components}{Components to keep. Default all.}
 
-\item{rotate}{Optional rotation. Use \code{"varimax"} for orthogonal
-rotation or \code{NULL} (default).}
+\item{rotate}{\code{NULL}/\code{"none"}, \code{"varimax"} or \code{"promax"}.}
 
-\item{na_action}{Either \code{"error"} (default) or \code{"omit"}.}
+\item{na_action}{\code{"error"}, \code{"omit"}, \code{"mean"}, \code{"median"} or \code{"knn"}
+(via \pkg{mice} / \pkg{VIM}).}
+
+\item{k_nn}{Neighbours for knn. Default 5.}
+
+\item{seed}{Optional integer seed.}
 }
 \value{
-A list of class \code{"boot_loadings"} with elements:
-\code{mean_loadings}, \code{sd_loadings}, \code{ci_lower},
-\code{ci_upper}, \code{sign_consistency}, \code{n_boot}, and
-\code{pca_reference}.
+List of class \code{"boot_loadings"}.
 }
 \description{
-Runs PCA on \code{n_boot} bootstrap resamples and returns per-variable
-loading distributions. Component signs are aligned to a reference PCA
-run to resolve the inherent sign ambiguity of principal components.
-}
-\examples{
-boot <- boot_loadings(iris[, 1:4], n_boot = 50)
-boot$mean_loadings
-boot$ci_lower
-
+Bootstrap PCA Loadings
 }
